@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Status do Arduino</title>
+</head>
+<body>
+    <h2>Último Status do Alimentador</h2>
+    <p>Tipo: <span id="tipo"></span></p>
+    <p>Valor: <span id="valor"></span></p>
+    <p>Data: <span id="data"></span></p>
+    <p>Hora: <span id="hora"></span></p>
+    <hr>
+    <h2>Alarmes Definidos:</h2>
+    <p>Alarme 1: <span id="alarme1"></span></p>
+    <p>Alarme 2: <span id="alarme2"></span></p>
+    <hr>
+    <h2>Definir Alarmes:</h2>
+    <label for="horaAlarme1">Alarme 1:</label>
+    <input type="time" id="horaAlarme1" name="horaAlarme1">
+    <button id="defAlarme1">Setar Alarme 1</button>
+    <br>
+    <br>
+    <label for="horaAlarme2">Alarme 2:</label>
+    <input type="time" id="horaAlarme2" name="horaAlarme2">
+    <button id="defAlarme2">Setar Alarme 2</button>
+    <hr>
+    <button id="botao-alimentador">Acionar o Alimentador</button>
+    <hr>
+    <!-- <p>Clique <a href="/data.csv">aqui</a> para baixar o arquivo de dados</p> -->
+    <p>Clique <a href="/download-datalist">aqui</a> para baixar o arquivo de dados</p>
+    <hr>
+    <h2>Lista de Dados do Alimentador</h2>
+    <table border="1">
+        <thead>
+            <tr>
+                <th>Tipo</th>
+                <th>Valor</th>
+                <th>Data</th>
+                <th>Hora</th>
+            </tr>
+        </thead>
+        <tbody id="csv-data">
+            <!-- As linhas do CSV serão inseridas aqui -->
+        </tbody>
+    </table>
+
+    <script>
+        // Função para atualizar os dados do servidor
+        function updateStatus() {
+            fetch('/status')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('tipo').innerText = data.tipo;
+                    document.getElementById('valor').innerText = data.valor;
+                    document.getElementById('data').innerText = data.data;
+                    document.getElementById('hora').innerText = data.hora;
+                    document.getElementById('alarme1').innerText = data.alarme1;
+                    document.getElementById('alarme2').innerText = data.alarme2;
+                })
+                .catch(error => console.error('Erro ao obter os dados:', error));
+        }
+
+        // Atualiza os dados a cada 5 segundos (5000 milissegundos)
+        setInterval(updateStatus, 3000);
+
+        // Atualiza os dados quando a página é carregada pela primeira vez
+        document.addEventListener('DOMContentLoaded', updateStatus);
+
+        // Função para atualizar as últimas 10 linhas do CSV
+        function updateCSVData() {
+            fetch('/last-10-rows')
+                .then(response => response.json())
+                .then(data => {
+                    const tbody = document.getElementById('csv-data');
+                    tbody.innerHTML = '';
+                    data.forEach(row => {
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `
+                            <td>${row.tipo}</td>
+                            <td>${row.valor}</td>
+                            <td>${row.data}</td>
+                            <td>${row.hora}</td>
+                        `;
+                        tbody.appendChild(tr);
+                    });
+                })
+                .catch(error => console.error('Erro ao obter os dados do CSV:', error));
+        }
+
+        // Atualiza os dados do CSV quando a página é carregada pela primeira vez
+        document.addEventListener('DOMContentLoaded', updateCSVData);
+
+        // Atualiza os dados do CSV a cada 10 segundos (10000 milissegundos)
+        setInterval(updateCSVData, 10000);
+    </script>
+
+    <script>
+        // Seleciona o botão pelo seu ID
+        const botaoAlimentador = document.getElementById('botao-alimentador');
+    
+        // Adiciona um evento de clique ao botão
+        botaoAlimentador.addEventListener('click', () => {
+            // Faz uma solicitação POST para a rota /food com o valor 1
+            fetch('/food', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ 'food': 1 })
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Exibe uma mensagem com a resposta do servidor
+                console.log(data.message);
+            })
+            .catch(error => console.error('Erro ao acionar o alimentador:', error));
+        });
+    </script>
+    <script>
+        const botaoAlarme1 = document.getElementById('defAlarme1');
+        botaoAlarme1.addEventListener('click', () => {
+            const horaAlarme1 = document.getElementById('horaAlarme1').value;
+            fetch('/alarme1', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ 'alarme1': horaAlarme1, 'update': 1 })
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log(data.message);
+            })
+            .catch(error => console.error('Erro ao setar o alarme 1:', error));
+        });
+    </script>
+    <script>
+        const botaoAlarme2 = document.getElementById('defAlarme2');
+        botaoAlarme2.addEventListener('click', () => {
+            const horaAlarme2 = document.getElementById('horaAlarme2').value;
+            fetch('/alarme2', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ 'alarme2': horaAlarme2, 'update': 1 })
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log(data.message);
+            })
+            .catch(error => console.error('Erro ao setar o alarme 2:', error));
+        });
+    </script>
+</body>
+</html>
